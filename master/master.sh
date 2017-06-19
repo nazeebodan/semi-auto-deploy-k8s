@@ -94,7 +94,7 @@ function createK8scomponents(){
     cp -r server/bin/{kube-apiserver,kube-controller-manager,kube-scheduler,kubectl} /usr/bin/
     chmod 755 /usr/bin/kube*
 	check_ok
-	echo "step:------> copy kube-node components to /usr/bin completed."
+	echo "step:------> copy kube-master components to /usr/bin completed."
 	sleep 1
 	rm -rf kubernetes
 }
