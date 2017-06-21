@@ -236,18 +236,6 @@ cpServiceConfig(){
 	sleep 1
 }
 
-installEtcdAndFlannel(){
-	echo "step:------> install etcd flannel package"
-	rpm -e --nodeps etcd
-	rpm -e --nodeps flannel
-	for p in etcd flannel
-	do
-		pkgYum $p
-	done	
-	check_ok
-	echo "step:------> install etcd flannel package completed."
-}
-
 configEtcd(){
 	echo "step:------> config etcd "
 	sleep 1
