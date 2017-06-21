@@ -3,25 +3,40 @@ Description=Kubernetes API Server
 Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 After=network.target
 After=etcd.service
-
 [Service]
-EnvironmentFile=-/etc/kubernetes/config
-EnvironmentFile=-/etc/kubernetes/apiserver
-User=kube
-ExecStart=/usr/bin/kube-apiserver \
-	    $KUBE_LOGTOSTDERR \
-	    $KUBE_LOG_LEVEL \
-	    $KUBE_ETCD_SERVERS \
-	    $KUBE_API_ADDRESS \
-	    $KUBE_API_PORT \
-	    $KUBELET_PORT \
-	    $KUBE_ALLOW_PRIV \
-	    $KUBE_SERVICE_ADDRESSES \
-	    $KUBE_ADMISSION_CONTROL \
-	    $KUBE_API_ARGS
+ExecStart=/usr/bin/kube-apiserver \\
+--admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,DefaultStorageClass,ResourceQuota \\
+--advertise-address=${MASTER_NAME} \\
+--bind-address=${MASTER_NAME} \\
+--insecure-bind-address=${MASTER_NAME} \\
+--authorization-mode=RBAC \\
+--runtime-config=rbac.authorization.k8s.io/v1alpha1 \\
+--kubelet-https=true \\
+--experimental-bootstrap-token-auth \\
+--token-auth-file=/etc/kubernetes/token.csv \\
+--service-cluster-ip-range=10.254.0.0/16 \\
+--service-node-port-range=30000-32767 \\
+--tls-cert-file=/etc/kubernetes/ssl/kubernetes.pem \\
+--tls-private-key-file=/etc/kubernetes/ssl/kubernetes-key.pem\\
+--client-ca-file=/etc/kubernetes/ssl/ca.pem \\
+--service-account-key-file=/etc/kubernetes/ssl/ca-key.pem \\
+--etcd-cafile=/etc/kubernetes/ssl/ca.pem \\
+--etcd-certfile=/etc/kubernetes/ssl/kubernetes.pem \\
+--etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem \\
+--enable-swagger-ui=true \\
+--apiserver-count=3 \\
+--audit-log-maxage=30 \\
+--audit-log-maxbackup=3 \\
+--audit-log-maxsize=100 \\
+--audit-log-path=/var/lib/audit.log \\
+--event-ttl=1h \\
+--etcd-servers=http://{MASTER_NAME}:2379 \\
+--logtostderr=true \\
+--v=0 \\
+--allow-privileged=true
+--master=http://${MASTER_NAME}:8080
 Restart=on-failure
 Type=notify
 LimitNOFILE=65536
-
 [Install]
 WantedBy=multi-user.target
