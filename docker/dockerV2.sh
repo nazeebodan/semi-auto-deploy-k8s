@@ -15,7 +15,8 @@ check_ok() {
 }
 
 ##some env
-
+baseDir="/softdb"
+DOCKER_FILE="docker-17.05.0-ce.tgz"
 
 echo "step:------> remove old docker version"
 sleep 1
@@ -24,38 +25,62 @@ check_ok
 echo "step:------> remove old docker version completed."
 sleep 1
 
-echo "step:------> yum install some needed package for docker"
+echo "step:------> deploy docker binary install package"
 sleep 1
-yum install -y yum-utils device-mapper-persistent-data lvm2
-echo "step:------> yum install some needed package for docker completed."
-sleep 1
-
-echo "step:------> config repo for docker"
-sleep 1
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-yum-config-manager --enable docker-ce-edge
-echo "step:------> config repo for docker completed."
-sleep 1
-
-echo "step:------> install docker"
-sleep 1
-yum makecache fast
-yum install -y docker-ce
-echo "step:------> install docker completed."
+cd ${baseDir}/docker
+if [ ! -f "$baseDir/docker/docker-17.05.0-ce.tgz" ]; then
+	wget https://get.docker.com/builds/Linux/x86_64/${DOCKER_FILE}
+	check_ok
+fi
+tar -xvf ${DOCKER_FILE}
+cp docker/docker* /usr/bin
+cp docker/completion/bash/docker /etc/bash_completion.d/
+echo "step:------> deploy docker binary install package completed."
 sleep 1
 
-echo "step:------> make devicemapper config"
+echo "step:------> config docker config"
 sleep 1
-mkdir -p /etc/docker/
-echo "{
-		\"storage-driver\": \"devicemapper\"
-}" > daemon.json
-echo "step:------> make devicemapper config comleted"
+cat > ${baseDir}/docker/docker.service <<EOF
+[Unit]
+Description=Docker Application Container Engine
+Documentation=http://docs.docker.io
+[Service]
+Environment="PATH=/usr/bin:/bin:/usr/sbin"
+EnvironmentFile=-/run/flannel/docker
+ExecStart=/usr/bin/dockerd --log-level=error $DOCKER_NETWORK_OPTIONS
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+Delegate=yes
+KillMode=process
+[Install]
+WantedBy=multi-user.target
+EOF
+
+iptables -P FORWARD ACCEPT
+mkdir -p /etc/docker
+cat > /etc/docker/daemon2.json <<EOF
+{
+"registry-mirrors": ["https://docker.mirrors.ustc.edu.cn", "hub-mirror.c.163.com"],"max-concurrent-downloads": 10
+}
+EOF
+echo "step:------> config docker config completed."
 sleep 1
 
-echo "step:------> startup docker"
+echo "step:------> startup docker "
 sleep 1
+cp docker.service /usr/lin/systemd/system/
+systemctl daemon-reload
+systemctl stop firewalld
+iptables -F && sudo iptables -X && sudo iptables -F -t nat && sudo iptables -X -t nat
+systemctl enable docker
 systemctl start docker
 check_ok
-docker info
 
+echo "step:------> startup docker completed."
+sleep
+
+docker info
