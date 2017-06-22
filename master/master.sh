@@ -36,6 +36,8 @@ serviceDir="/lib/systemd/system"
 MASTER_NAME=`hostname`
 MASTER_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 ETC_NAME=etcd-`hostname`
+BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
+KUBE_APISERVER="https://${MASTER_IP}:6443"
 mkdir -p /var/lib/etcd
 mkdir -p /etc/kubernetes/
 rm -rf /lib/systemd/system/kube*
@@ -86,12 +88,13 @@ enableAndStarService(){
 }
 
 createK8scomponents(){
-    if [ ! -f "$baseDir/master/${k8s_file}" ]; then
+    if [ ! -f "$baseDir/master/k8s/${k8s_file}" ]; then
         echo "${k8s_file} is not exist!"
         exit 0
     fi
 	echo "step:------> unzip k8s-package"
 	sleep 1
+	cd $baseDir/master/k8s
     tar -zxf $k8s_file
     cd kubernetes
 	echo "step:------> unzip k8s-package comleted."
@@ -104,11 +107,12 @@ createK8scomponents(){
 	check_ok
 	echo "step:------> copy kube-node components to /usr/bin completed."
 	sleep 1
+	cd ..
 	rm -rf kubernetes
 }
 
 createConfigFiles(){
-	
+	cd ${baseDir}/master/k8s
 	#创建 apiserver.service
 	cat > kube-apiserver.service <<EOF
 [Unit]
@@ -119,14 +123,14 @@ After=etcd.service
 [Service]
 ExecStart=/usr/bin/kube-apiserver \\
 --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,DefaultStorageClass,ResourceQuota \\
---advertise-address=${MASTER_NAME} \\
---bind-address=${MASTER_NAME} \\
---insecure-bind-address=${MASTER_NAME} \\
+--advertise-address=${MASTER_IP} \\
+--bind-address=${MASTER_IP} \\
+--insecure-bind-address=${MASTER_IP} \\
 --authorization-mode=RBAC \\
 --runtime-config=rbac.authorization.k8s.io/v1alpha1 \\
 --kubelet-https=true \\
 --experimental-bootstrap-token-auth \\
---token-auth-file=/etc/kubernetes/token.csv \\
+--token-auth-file=/etc/kubernetes/ssl/token.csv \\
 --service-cluster-ip-range=10.254.0.0/16 \\
 --service-node-port-range=30000-32767 \\
 --tls-cert-file=/etc/kubernetes/ssl/kubernetes.pem \\
@@ -143,7 +147,7 @@ ExecStart=/usr/bin/kube-apiserver \\
 --audit-log-maxsize=100 \\
 --audit-log-path=/var/lib/audit.log \\
 --event-ttl=1h \\
---etcd-servers=http://${MASTER_NAME}:2379 \\
+--etcd-servers=https://${MASTER_IP}:2379 \\
 --logtostderr=true \\
 --v=0 \\
 --allow-privileged=true
@@ -172,10 +176,8 @@ ExecStart=/usr/bin/kube-controller-manager \\
 --service-account-private-key-file=/etc/kubernetes/ssl/ca-key.pem \\
 --root-ca-file=/etc/kubernetes/ssl/ca.pem \\
 --leader-elect=true \\
---etcd-servers=http://${MASTER_NAME}:2379 \\
 --logtostderr=true \\
 --v=0 \\
---allow-privileged=true
 --master=http://${MASTER_NAME}:8080
 Restart=on-failure
 RestartSec=5
@@ -184,7 +186,7 @@ WantedBy=multi-user.target
 EOF
 
 	#创建scheduler.service
-	cat > kube-controller-manager.service <<EOF
+	cat > kube-scheduler.service <<EOF
 [Unit]
 Description=Kubernetes Scheduler
 Documentation=https://github.com/GoogleCloudPlatform/kubernetes
@@ -192,10 +194,8 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 ExecStart=/usr/bin/kube-scheduler \\
 --address=127.0.0.1 \\
 --leader-elect=true \\
---etcd-servers=http://${MASTER_NAME}:2379 \\
 --logtostderr=true \\
 --v=0 \\
---allow-privileged=true
 --master=http://${MASTER_NAME}:8080
 Restart=on-failure
 RestartSec=5
@@ -234,6 +234,69 @@ cpServiceConfig(){
 	check_ok
 	echo "step:------> create $1 config completed."
 	sleep 1
+}
+
+createToken(){
+	cd ${baseDir}/master/k8s
+	echo "step:------> create and copy bootstart_token"
+	sleep 1
+	cat > token.csv <<EOF
+	${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,"system:kubelet-bootstrap"
+EOF
+
+	echo "step:------> create bootstart_token completed."
+	sleep 1
+	mkdir -p /etc/kubernete/ssl
+	cp token.csv /etc/kubernetes/ssl
+	echo "step:------> copy bootstart_token completed."
+	sleep 1
+}
+
+createKubectlConfig(){
+	
+	cd ${baseDir}/master/k8s
+	
+	echo "step:------> create kubectl kubeconfig"
+	sleep 1
+	#设置集群参数
+	kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=${KUBE_APISERVER}
+	#设置客户端认证参数
+	kubectl config set-credentials admin --client-certificate=/etc/kubernetes/ssl/admin.pem --embed-certs=true --client-key=/etc/kubernetes/ssl/admin-key.pem
+	#设置上下文参数
+	kubectl config set-context kubernetes --cluster=kubernetes --user=admin
+	#设置默认上下文
+	kubectl config use-context kubernetes
+	echo "step:------> create kubectl kubeconfig completed."
+	sleep 1
+	
+	echo "step:------> create kubelet bootstrapping kubeconfig"
+	sleep 1
+	#设置集群参数
+	kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=${KUBE_APISERVER} --kubeconfig=bootstrap.kubeconfig
+	#设置客户端认证参数
+	kubectl config set-credentials kubelet-bootstrap --token=${BOOTSTRAP_TOKEN} --kubeconfig=bootstrap.kubeconfig
+	#设置上下文参数
+	kubectl config set-context default --cluster=kubernetes --user=kubelet-bootstrap --kubeconfig=bootstrap.kubeconfig
+	#设置默认上下文
+	kubectl config use-context default --kubeconfig=bootstrap.kubeconfig
+	echo "step:------> create kubelet bootstrapping kubeconfig completed."
+	sleep 1
+	
+	echo "step:------> create kube-proxy kubeconfig"
+	sleep 1
+	#设置集群参数
+	kubectl config set-cluster kubernetes --certificate-authority=/etc/kubernetes/ssl/ca.pem --embed-certs=true --server=${KUBE_APISERVER} --kubeconfig=kube-proxy.kubeconfig
+	#设置客户端认证参数
+	kubectl config set-credentials kube-proxy --client-certificate=/etc/kubernetes/ssl/kube-proxy.pem --client-key=/etc/kubernetes/ssl/kube-proxy-key.pem --embed-certs=true --kubeconfig=kube-proxy.kubeconfig
+	#设置上下文参数
+	kubectl config set-context default --cluster=kubernetes --user=kube-proxy --kubeconfig=kube-proxy.kubeconfig
+	#设置默认上下文
+	kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+	echo "step:------> create kube-proxy kubeconfig completed."
+	sleep 1
+	
+	
+	cp bootstrap.kubeconfig kube-proxy.kubeconfig /etc/kubernetes/
 }
 
 configEtcd(){
@@ -288,8 +351,8 @@ EOF
 	
 	echo "step:------> ectd startup  "
 	sleep 1
-	rm -rf /lib/systemd/system/etcd.service
-	mv etcd.service /lib/systemd/system/
+	rm -rf ${serviceDir}/etcd.service
+	mv etcd.service ${serviceDir}
 	systemctl daemon-reload
 	systemctl enable etcd
 	systemctl restart etcd
@@ -308,7 +371,8 @@ EOF
 	sleep 1
 	check_ok
 	etcdctl mkdir /kube-centos/network
-	etcdctl mk /kube-centos/network/config "{ \"Network\": \"172.30.0.0/16\", \"SubnetLen\": 24, \"Backend\": { \"Type\": \"vxlan\" } }"
+	etcdctl --endpoints=https://${MASTER_NAME}:2379 --ca-file=/etc/kubernetes/ssl/ca.pem --cert-file=/etc/kubernetes/ssl/kubernetes.pem --key-file=/etc/kubernetes/ssl/kubernetes-key.pem mk /kube-centos/network/config '{"Network":"172.30.0.0/16", "SubnetLen": 24, "Backend": {"Type": "vxlan"}}'
+	#etcdctl mk /kube-centos/network/config "{ \"Network\": \"172.30.0.0/16\", \"SubnetLen\": 24, \"Backend\": { \"Type\": \"vxlan\" } }"
 	echo "step:------> config etcd network completed."
 	sleep 1	
 }
@@ -316,13 +380,14 @@ EOF
 configFlannel(){
 	echo "step:------> config flannel "
 	sleep 1
+	mkdir -p "${baseDir}/master/flannel/flannel
+	cd ${baseDir}/master/flannel
 	
 	if [ ! -f "${baseDir}/master/flannel/${flannel_file}" ]; then
 	    wget https://github.com/coreos/flannel/releases/download/${flannel_version}/${flannel_file}
 		check_ok
 	fi
-	mkdir -p "${baseDir}/master/flannel/flannel
-	cd ${baseDir}/master/flannel
+	
 	tar -zxf ${flannel_file} -C flannel 
 	cp flannel/{flanneld,mk-docker-opts.sh} /usr/bin
 	
@@ -342,52 +407,40 @@ ExecStart=/usr/bin/flanneld \\
 -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem \\
 -etcd-endpoints=https://${MASTER_NAME}:2379 \\
 -etcd-prefix=/kube-centos/network \\
-$FLANNEL_OPTIONS
-ExecStartPost=/root/local/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
+--iface=eth0
+ExecStartPost=/usr/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 RequiredBy=docker.service
 EOF
 	
-	echo "step:------> config etcd completed."
+	echo "step:------> config flannel completed."
 	sleep 1
 	
-	echo "step:------> ectd startup  "
+	echo "step:------> flannel startup  "
 	sleep 1
-	rm -rf /lib/systemd/system/etcd.service
-	mv etcd.service /lib/systemd/system/
+	rm -rf ${serviceDir}/flanneld.service
+	mv ${baseDir}/master/flannel/flanneld.service ${serviceDir}
+	
 	systemctl daemon-reload
-	systemctl enable etcd
-	systemctl restart etcd
+	systemctl enable flanneld
+	systemctl restart flanneld
 	check_ok
 	
-	echo "step:------> ectd startup completed. "
+	echo "step:------> flannel startup completed. "
 	sleep 1
-	
-	echo "step:------> check etcd "
-	sleep 1
-	etcdctl --ca-file=/etc/kubernetes/ssl/ca.pem --cert-file=/etc/kubernetes/ssl/kubernetes.pem --key-file=/etc/kubernetes/ssl/kubernetes-key.pem cluster-health
-	echo "step:------> check etcd completed"
-	sleep 1
-	
-	echo "step:------> config etcd network "
-	sleep 1
-	check_ok
-	etcdctl mkdir /kube-centos/network
-	etcdctl mk /kube-centos/network/config "{ \"Network\": \"172.30.0.0/16\", \"SubnetLen\": 24, \"Backend\": { \"Type\": \"vxlan\" } }"
-	echo "step:------> config etcd network completed."
-	sleep 1	
 }
 
 closeSelinux
 closeIptables
 configEtcd
+configFlannel
 createK8scomponents
 createConfigFiles
 
 
-configFlannel
+
 startKubeService
 
 #echo "k8s-node installed complete!"
