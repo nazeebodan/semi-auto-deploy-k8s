@@ -89,24 +89,6 @@ cpPem(){
 	sleep 1
 }
 
-createToken(){
-	echo "step:------> create and copy bootstart_token"
-	sleep 1
-	BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
-	cat > token.csv <<EOF
-	${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,"system:kubelet-bootstrap"
-EOF
-
-	echo "step:------> create bootstart_token completed."
-	sleep 1
-	mkdir -p /etc/kubernete
-	cp token.csv /etc/kubernetes
-	echo "step:------> create and copy bootstart_token completed."
-	sleep 1
-}
-
-
 configSSLTools
 createPem
 cpPem
-createToken
