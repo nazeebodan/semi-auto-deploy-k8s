@@ -4,10 +4,10 @@
 * ca: 用于装认证的配置文件和工具
 * docker: docker的安装配置脚本，注意：在node.sh脚本已经包含了docker的安装
 * master:
-* 	etcd: etcd的安装文件
-* 	flannel: flannel的安装文件
-* 	k8s: master节点的部署脚本
-* 	repo: 用于常用备注的说明
+	* etcd: etcd的安装文件
+	* flannel: flannel的安装文件
+	* k8s: master节点的部署脚本
+	* repo: 用于常用备注的说明
 * node: node节点的部署 
 	
 
