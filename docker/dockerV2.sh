@@ -7,11 +7,11 @@ sleep 1
 
 ##check last command is OK or not.
 check_ok() {
-        if [ $? != 0 ]
-                then
-                echo "Error, Check the error log."
-                exit 1
-        fi
+	if [ $? != 0 ]
+    	then
+        	echo "Error, Check the error log."
+            exit 1
+    fi
 }
 
 ##some env
@@ -32,7 +32,7 @@ if [ ! -f "$baseDir/docker/docker-17.05.0-ce.tgz" ]; then
 	wget https://get.docker.com/builds/Linux/x86_64/${DOCKER_FILE}
 	check_ok
 fi
-tar -xvf ${DOCKER_FILE}
+tar -zxf ${DOCKER_FILE}
 cp docker/docker* /usr/bin
 cp docker/completion/bash/docker /etc/bash_completion.d/
 echo "step:------> deploy docker binary install package completed."
@@ -62,9 +62,9 @@ EOF
 
 iptables -P FORWARD ACCEPT
 mkdir -p /etc/docker
-cat > /etc/docker/daemon2.json <<EOF
+cat > /etc/docker/daemon.json <<EOF
 {
-"registry-mirrors": ["https://docker.mirrors.ustc.edu.cn", "hub-mirror.c.163.com"],"max-concurrent-downloads": 10
+	"registry-mirrors": ["https://docker.mirrors.ustc.edu.cn", "hub-mirror.c.163.com"],"max-concurrent-downloads": 10
 }
 EOF
 echo "step:------> config docker config completed."
@@ -72,7 +72,7 @@ sleep 1
 
 echo "step:------> startup docker "
 sleep 1
-cp docker.service /usr/lin/systemd/system/
+cp docker.service /usr/lib/systemd/system/
 systemctl daemon-reload
 systemctl stop firewalld
 iptables -F && sudo iptables -X && sudo iptables -F -t nat && sudo iptables -X -t nat
