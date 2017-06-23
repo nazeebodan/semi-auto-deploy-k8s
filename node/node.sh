@@ -15,8 +15,6 @@ check_ok() {
 
 baseDir="/softdb"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
-etcd_version="v3.1.9"
-etcd_file="etcd/etcd-v3.1.9-linux-amd64.tar.gz"
 flannel_version="v0.7.1"
 flannel_file="flannel-v0.7.1-linux-amd64.tar.gz"
 DOCKER_FILE="docker-17.05.0-ce.tgz"
@@ -26,7 +24,7 @@ MASTER_IP="172.18.78.48"
 NODE_NAME=`hostname`
 NODE_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 KUBE_APISERVER="https://${MASTER_IP}:6443"
-mkdir -p /var/lib/etcd
+
 mkdir -p /etc/kubernetes/
 
 closeSelinux(){
