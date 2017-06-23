@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 #######Begin########
@@ -88,30 +87,30 @@ enableAndStarService(){
 }
 
 createK8scomponents(){
-    if [ ! -f "$baseDir/master/k8s/${k8s_file}" ]; then
+    if [ ! -f "${baseDir}/master/k8s/${k8s_file}" ]; then
         echo "${k8s_file} is not exist!"
         exit 0
     fi
 	echo "step:------> unzip k8s-package"
 	sleep 1
-	cd $baseDir/master/k8s
-    tar -zxf $k8s_file
+	cd ${baseDir}/master/k8s
+    tar -zxf ${k8s_file}
     cd kubernetes
 	echo "step:------> unzip k8s-package comleted."
 	sleep 1
-	echo "step:------> copy kube-node components to /usr/bin"
+	echo "step:------> copy kube-master components to /usr/bin"
 	sleep 1
 	rm -rf /usr/bin/kube*
     cp -r server/bin/{kube-apiserver,kube-controller-manager,kube-scheduler,kubectl} /usr/bin/
     chmod 755 /usr/bin/kube*
 	check_ok
-	echo "step:------> copy kube-node components to /usr/bin completed."
+	echo "step:------> copy kube-master components to /usr/bin completed."
 	sleep 1
 	cd ..
 	rm -rf kubernetes
 }
 
-createConfigFiles(){
+createK8sConfigFiles4Master(){
 	cd ${baseDir}/master/k8s
 	#创建 apiserver.service
 	cat > kube-apiserver.service <<EOF
@@ -303,6 +302,8 @@ configEtcd(){
 	echo "step:------> config etcd "
 	sleep 1
 	
+	mkdir -p /var/lib/etcd
+	
 	if [ ! -f "${baseDir}/master/etcd/${etcd_file}" ]; then
 	        wget https://github.com/coreos/etcd/releases/download/${etcd_version}/${etcd_file}
 			check_ok
@@ -380,7 +381,7 @@ EOF
 configFlannel(){
 	echo "step:------> config flannel "
 	sleep 1
-	mkdir -p "${baseDir}/master/flannel/flannel
+	mkdir -p ${baseDir}/master/flannel/flannel
 	cd ${baseDir}/master/flannel
 	
 	if [ ! -f "${baseDir}/master/flannel/${flannel_file}" ]; then
@@ -407,7 +408,7 @@ ExecStart=/usr/bin/flanneld \\
 -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem \\
 -etcd-endpoints=https://${MASTER_NAME}:2379 \\
 -etcd-prefix=/kube-centos/network \\
---iface=eth0
+-iface=eth0
 ExecStartPost=/usr/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
 [Install]
@@ -437,10 +438,7 @@ closeIptables
 configEtcd
 configFlannel
 createK8scomponents
-createConfigFiles
-
-
-
+createK8sConfigFiles4Master
 startKubeService
 
 #echo "k8s-node installed complete!"
