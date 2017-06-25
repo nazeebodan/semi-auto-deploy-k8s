@@ -439,12 +439,12 @@ EOF
 	sleep 1
 }
 
-closeSelinux
-closeIptables
-configEtcd
-configFlannel
-createK8scomponents
-createK8sConfigFiles4Master
-startKubeService
+closeSelinux #关闭selinux
+closeIptables #关闭防火墙
+configEtcd #配置etcd
+configFlannel #配置flannel
+createK8scomponents #创建k8s的bin执行文件
+createK8sConfigFiles4Master #配置master节点的k8s
+startKubeService #启动master节点的k8s服务
 
 #echo "k8s-node installed complete!"
