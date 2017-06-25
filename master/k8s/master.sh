@@ -26,6 +26,7 @@ fi
 ##some env
 
 baseDir="/softdb"
+k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 etcd_version="v3.1.9"
 etcd_file="etcd/etcd-v3.1.9-linux-amd64.tar.gz"
@@ -88,8 +89,13 @@ enableAndStarService(){
 
 createK8scomponents(){
     if [ ! -f "${baseDir}/master/k8s/${k8s_file}" ]; then
-        echo "${k8s_file} is not exist!"
-        exit 0
+        #echo "${k8s_file} is not exist!"
+        #exit 0
+		echo "${k8s_file} is not exist! Now,We will get it first!"
+		echo "step:------> wget ${k8s_file}"
+		wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
+		check_ok
+		echo "step:------> wget ${k8s_file} completed."
     fi
 	echo "step:------> unzip k8s-package"
 	sleep 1
