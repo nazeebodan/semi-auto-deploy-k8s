@@ -1,8 +1,13 @@
 #!/bin/bash
 
 #######Begin########
-echo "=====================>begin to install k8s-master<======================"
-sleep 1
+echo "***************************************************************************************************"
+echo "*                                                                                                 *"
+echo "*                                 begin to install k8s-master                                     *"
+echo "*                                                                                                 *"
+echo "***************************************************************************************************"
+sleep 2
+
 
 ##check last command is OK or not.
 check_ok() {
@@ -29,7 +34,7 @@ baseDir="/softdb/semi-auto-deploy-k8s"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 etcd_version="v3.1.9"
-etcd_file="etcd/etcd-v3.1.9-linux-amd64.tar.gz"
+etcd_file="etcd-v3.1.9-linux-amd64.tar.gz"
 flannel_version="v0.7.1"
 flannel_file="flannel-v0.7.1-linux-amd64.tar.gz"
 serviceDir="/lib/systemd/system"
@@ -92,9 +97,15 @@ createK8scomponents(){
     if [ ! -f "${baseDir}/master/k8s/${k8s_file}" ]; then
         #echo "${k8s_file} is not exist!"
         #exit 0
-		echo "${k8s_file} is not exist! Now,We will get it first!"
+		echo "***************************************************************************************************"
+		echo "*                                                                                                 *"
+		echo "*             kubernetes-server-linux-amd64.tar.gzis not exist! Now,We will get it first!         *"
+		echo "*                                                                                                 *"
+		echo "***************************************************************************************************"
+		sleep  2
 		echo "step:------> wget ${k8s_file}"
-		wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
+		wget https://dl.k8s.io/${k8s_version}/${k8s_file}
+		#wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
 		check_ok
 		echo "step:------> wget ${k8s_file} completed."
 		sleep 1
@@ -103,18 +114,17 @@ createK8scomponents(){
 	sleep 1
 	cd ${baseDir}/master/k8s
     tar -zxf ${k8s_file}
-    cd kubernetes
+    check_ok
 	echo "step:------> unzip k8s-package comleted."
 	sleep 1
 	echo "step:------> copy kube-master components to /usr/bin"
 	sleep 1
 	rm -rf /usr/bin/kube*
-    cp -r server/bin/{kube-apiserver,kube-controller-manager,kube-scheduler,kubectl} /usr/bin/
+    cp -r kubernetes/server/bin/{kube-apiserver,kube-controller-manager,kube-scheduler,kubectl} /usr/bin/
     chmod 755 /usr/bin/kube*
 	check_ok
 	echo "step:------> copy kube-master components to /usr/bin completed."
 	sleep 1
-	cd ..
 	rm -rf kubernetes
 }
 
@@ -177,6 +187,7 @@ ExecStart=/usr/bin/kube-controller-manager \\
 --address=127.0.0.1 \\
 --allocate-node-cidrs=true \\
 --service-cluster-ip-range=10.254.0.0/16 \\
+--cluster-cidr=10.254.0.0/16 \\
 --cluster-name=kubernetes \\
 --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \\
 --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \\
@@ -224,6 +235,13 @@ startKubeService(){
 	enableAndStarService kube-apiserver
 	enableAndStarService kube-controller-manager
 	enableAndStarService kube-scheduler
+	echo "***************************************************************************************************"
+	echo "*                                                                                                 *"
+	echo "* show the kube-master cs status,If any componentstatuse's status is not healty,Pls check err log *"
+	sleep  2
+	kubectl get cs
+	echo "*                                                                                                 *"
+	echo "***************************************************************************************************"
 }
 
 cpServiceConfig(){
@@ -238,7 +256,7 @@ cpServiceConfig(){
 		check_ok
     fi
 		
-    cp ${baseDir}/master/$1 ${serviceDir}/
+    cp ${baseDir}/master/k8s/$1 ${serviceDir}/
 	check_ok
 	echo "step:------> create $1 config completed."
 	sleep 1
@@ -449,6 +467,12 @@ configEtcd #配置etcd
 configFlannel #配置flannel
 createK8scomponents #创建k8s的bin执行文件
 createK8sConfigFiles4Master #配置master节点的k8s
+createToken #创建token
+createKubectlConfig #创建kubectl的配置文件
 startKubeService #启动master节点的k8s服务
 
-#echo "k8s-node installed complete!"
+echo "***************************************************************************************************"
+echo "*                                                                                                 *"
+echo "*                                 k8s-master install completed!                                   *"
+echo "*                                                                                                 *"
+echo "***************************************************************************************************"

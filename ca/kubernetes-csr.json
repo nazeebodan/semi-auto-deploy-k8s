@@ -3,9 +3,9 @@
   "hosts": [
     "127.0.0.1",
     "sure-master",
+     "sure-node1",
     "172.18.78.47",
-    "172.18.78.48",
-    "sure-node1",
+    "172.18.78.49",
     "10.254.0.1",
     "kubernetes",
     "kubernetes.default",
