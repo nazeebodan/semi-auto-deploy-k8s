@@ -25,7 +25,7 @@ fi
 
 ##some env
 
-baseDir="/softdb"
+baseDir="/softdb/semi-auto-deploy-k8s"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 etcd_version="v3.1.9"

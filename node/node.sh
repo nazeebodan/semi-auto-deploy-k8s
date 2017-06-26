@@ -13,7 +13,7 @@ check_ok() {
         fi
 }
 
-baseDir="/softdb"
+baseDir="/softdb/semi-auto-deploy-k8s"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 flannel_version="v0.7.1"
