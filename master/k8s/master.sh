@@ -88,6 +88,7 @@ enableAndStarService(){
 }
 
 createK8scomponents(){
+	cd ${baseDir}/master/k8s/
     if [ ! -f "${baseDir}/master/k8s/${k8s_file}" ]; then
         #echo "${k8s_file} is not exist!"
         #exit 0
@@ -96,6 +97,7 @@ createK8scomponents(){
 		wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
 		check_ok
 		echo "step:------> wget ${k8s_file} completed."
+		sleep 1
     fi
 	echo "step:------> unzip k8s-package"
 	sleep 1
@@ -225,6 +227,7 @@ startKubeService(){
 }
 
 cpServiceConfig(){
+	cd ${baseDir}/master/k8s/
 	echo "step:------> create $1 config "
 	sleep 1
 	
@@ -305,14 +308,15 @@ createKubectlConfig(){
 }
 
 configEtcd(){
+	cd ${baseDir}/master/etcd
 	echo "step:------> config etcd "
 	sleep 1
 	
 	mkdir -p /var/lib/etcd
 	
 	if [ ! -f "${baseDir}/master/etcd/${etcd_file}" ]; then
-	        wget https://github.com/coreos/etcd/releases/download/${etcd_version}/${etcd_file}
-			check_ok
+		wget https://github.com/coreos/etcd/releases/download/${etcd_version}/${etcd_file}
+		check_ok
 	fi
 	tar -zxf ${baseDir}/master/etcd/${etcd_file}
 	mv ${baseDir}/master/etcd/etcd-v3.1.9-linux-amd64/etcd* /usr/bin/
@@ -385,10 +389,10 @@ EOF
 }
 
 configFlannel(){
+	cd ${baseDir}/master/flannel
 	echo "step:------> config flannel "
 	sleep 1
 	mkdir -p ${baseDir}/master/flannel/flannel
-	cd ${baseDir}/master/flannel
 	
 	if [ ! -f "${baseDir}/master/flannel/${flannel_file}" ]; then
 	    wget https://github.com/coreos/flannel/releases/download/${flannel_version}/${flannel_file}

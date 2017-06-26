@@ -15,7 +15,7 @@ check_ok() {
 }
 
 ##some env
-baseDir="/softdb"
+baseDir="/softdb/semi-auto-deploy-k8s"
 DOCKER_FILE="docker-17.05.0-ce.tgz"
 
 echo "step:------> remove old docker version"

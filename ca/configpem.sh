@@ -16,10 +16,11 @@ check_ok() {
 
 
 ##some env
-baseDir="/softdb"
+baseDir="/softdb/semi-auto-deploy-k8s"
 mkdir -p /etc/kubernetes/ssl
 
 configSSLTools(){
+	cd ${baseDir}/ca
 	echo "step:------> config sslTools "
     sleep 1
 	
@@ -51,6 +52,7 @@ configSSLTools(){
 }
 
 createPem(){
+	cd ${baseDir}/ca
 	echo "step:------> create ca cert ."
     sleep 1
 	cfssl gencert -initca ca-csr.json | cfssljson -bare ca
@@ -81,6 +83,7 @@ createPem(){
 }
 
 cpPem(){
+	cd ${baseDir}/ca
 	echo "step:------> copy *.pem to ssl "
     sleep 1
 	cp *.pem /etc/kubernetes/ssl

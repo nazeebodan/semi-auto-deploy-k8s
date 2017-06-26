@@ -104,10 +104,10 @@ createK8scomponents(){
 }
 
 configFlannel(){
+	cd ${baseDir}/master/flannel
 	echo "step:------> config flannel "
 	sleep 1
 	mkdir -p ${baseDir}/master/flannel/flannel
-	cd ${baseDir}/master/flannel
 	
 	if [ ! -f "${baseDir}/master/flannel/${flannel_file}" ]; then
 	    wget https://github.com/coreos/flannel/releases/download/${flannel_version}/${flannel_file}
@@ -159,7 +159,7 @@ EOF
 }
 
 configDocker(){
-
+	cd ${baseDir}/docker
 	echo "step:------> remove old docker version"
 	sleep 1
 	yum remove docker docker-common container-selinux docker-selinux docker-engine
@@ -286,7 +286,7 @@ EOF
 configKubelet(){
 	#这个操作时在master上做！
 	#kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
-	cd ${/softdb}/node/k8s
+	cd ${baseDir}/node/k8s
 	cp kube-proxy.service  /usr/lib/systemd/system
 	systemctl daemon-reload
 	systemctl enable kube-proxy
@@ -299,7 +299,7 @@ configKubelet(){
 }
 
 configKubeProxy(){
-	cd ${/softdb}/node/k8s
+	cd ${baseDir}/node/k8s
 	cp kubelet.service /usr/lib/systemd/system
 	systemctl daemon-reload
 	systemctl enable kubelet
