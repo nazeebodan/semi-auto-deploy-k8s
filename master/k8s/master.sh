@@ -45,7 +45,7 @@ BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
 KUBE_APISERVER="https://${MASTER_IP}:6443"
 mkdir -p /var/lib/etcd
 mkdir -p /etc/kubernetes/
-rm -rf /lib/systemd/system/kube*
+#rm -rf /lib/systemd/system/kube*
 
 backService(){
     if [  -f "${serviceDir}/$1" ]; then
@@ -238,10 +238,11 @@ startKubeService(){
 	echo "***************************************************************************************************"
 	echo "*                                                                                                 *"
 	echo "* show the kube-master cs status,If any componentstatuse's status is not healty,Pls check err log *"
-	sleep  2
-	kubectl get cs
 	echo "*                                                                                                 *"
 	echo "***************************************************************************************************"
+	sleep  2
+	kubectl get cs
+	
 }
 
 cpServiceConfig(){
@@ -272,7 +273,7 @@ EOF
 
 	echo "step:------> create bootstart_token completed."
 	sleep 1
-	mkdir -p /etc/kubernete/ssl
+	mkdir -p /etc/kubernetes/ssl
 	cp token.csv /etc/kubernetes/ssl
 	echo "step:------> copy bootstart_token completed."
 	sleep 1

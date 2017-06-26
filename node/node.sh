@@ -1,10 +1,14 @@
 #!/bin/bash
 
 #######Begin########
-echo "=====================>begin to install k8s-node<======================"
-sleep 1
+echo "***************************************************************************************************"
+echo "*                                                                                                 *"
+echo "*                                 begin to install k8s-node                                       *"
+echo "*                                                                                                 *"
+echo "***************************************************************************************************"
 
 ##check last command is OK or not.
+
 check_ok() {
         if [ $? != 0 ]
                 then
@@ -20,13 +24,13 @@ flannel_version="v0.7.1"
 flannel_file="flannel-v0.7.1-linux-amd64.tar.gz"
 DOCKER_FILE="docker-17.05.0-ce.tgz"
 serviceDir="/usr/lib/systemd/system"
-MASTER_NAME="sure-node1"
-MASTER_IP="172.18.78.48"
+MASTER_NAME="sure-master"
+MASTER_IP="172.18.78.47"
 NODE_NAME=`hostname`
 NODE_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 KUBE_APISERVER="https://${MASTER_IP}:6443"
 
-mkdir -p /etc/kubernetes/
+mkdir -p /etc/kubernetes/ssl
 
 closeSelinux(){
     echo "step:------> close selinux config"
@@ -56,10 +60,10 @@ doSomeOsConfig(){
 	closeSelinux
 	closeIptables
 	
-	mkdir -p /etc/kubernetes/ssl /var/lib/kublet /var/lib/kube-proxy
+	mkdir -p /etc/kubernetes/ssl /var/lib/kubelet /var/lib/kube-proxy
 	
 	cd /etc/kubernetes/ssl
-	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master,You should input masterhost's passwd"
+	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master, Plsase input MASTER_HOST's passwd"
 	sleep 1
 	scp ${MASTER_IP}:/etc/kubernetes/ssl/{ca.pem,kubernetes.pem,kubernetes-key.pem,token.csv} .
 	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master complted"
@@ -79,9 +83,14 @@ createK8scomponents(){
     if [ ! -f "${baseDir}/master/k8s/${k8s_file}" ]; then
         #echo "${k8s_file} is not exist!"
         #exit 0
-		echo "${k8s_file} is not exist! Now,We will get it first!"
+		echo "***************************************************************************************************"
+		echo "*                                                                                                 *"
+		echo "*             kubernetes-server-linux-amd64.tar.gzis not exist! Now,We will get it first!         *"
+		echo "*                                                                                                 *"
+		echo "***************************************************************************************************"
 		echo "step:------> wget ${k8s_file}"
-		wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
+		wget https://dl.k8s.io/${k8s_version}/kubernetes-server-linux-amd64.tar.gz
+		#wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
 		check_ok
 		echo "step:------> wget ${k8s_file} completed."
     fi
@@ -89,17 +98,16 @@ createK8scomponents(){
 	sleep 1
 	cd ${baseDir}/master/k8s
     tar -zxf ${k8s_file}
-    cd kubernetes
+    check_ok
 	echo "step:------> unzip k8s-package comleted."
 	sleep 1
 	echo "step:------> copy kube-node components to /usr/bin"
 	sleep 1
-    cp -r server/bin/{kubelet,kube-proxy,kubectl} /usr/bin/
+    cp -r kubernetes/server/bin/{kubelet,kube-proxy,kubectl} /usr/bin/
     chmod 755 /usr/bin/kube*
 	check_ok
 	echo "step:------> copy kube-node components to /usr/bin completed."
 	sleep 1
-	cd ..
 	rm -rf kubernetes
 }
 
@@ -171,6 +179,11 @@ configDocker(){
 	sleep 1
 	cd ${baseDir}/docker
 	if [ ! -f "$baseDir/docker/docker-17.05.0-ce.tgz" ]; then
+		echo "***************************************************************************************************"
+		echo "*                                                                                                 *"
+		echo "*                  Now,We will get it docker binary  install package first!                       *"
+		echo "*                                                                                                 *"
+		echo "***************************************************************************************************"
 		wget https://get.docker.com/builds/Linux/x86_64/${DOCKER_FILE}
 		check_ok
 	fi
@@ -189,8 +202,8 @@ Documentation=http://docs.docker.io
 [Service]
 Environment="PATH=/usr/bin:/bin:/usr/sbin"
 EnvironmentFile=-/run/flannel/docker
-ExecStart=/usr/bin/dockerd --log-level=error $DOCKER_NETWORK_OPTIONS
-ExecReload=/bin/kill -s HUP $MAINPID
+ExecStart=/usr/bin/dockerd --log-level=error \$DOCKER_NETWORK_OPTIONS
+ExecReload=/bin/kill -s HUP \$MAINPID
 Restart=on-failure
 RestartSec=5
 LimitNOFILE=infinity
@@ -205,10 +218,10 @@ EOF
 	iptables -P FORWARD ACCEPT
 	mkdir -p /etc/docker
 	cat > /etc/docker/daemon.json <<EOF
-	{
-		"registry-mirrors": ["https://docker.mirrors.ustc.edu.cn", "hub-mirror.c.163.com"],"max-concurrent-downloads": 10
-	}
-	EOF
+{
+	"registry-mirrors": ["https://docker.mirrors.ustc.edu.cn", "hub-mirror.c.163.com"],"max-concurrent-downloads": 10
+}
+EOF
 	echo "step:------> config docker config completed."
 	sleep 1
 	
@@ -223,13 +236,29 @@ EOF
 	check_ok
 	
 	echo "step:------> startup docker completed."
-	sleep
+	sleep 1
 	
 	docker info	
 }
 
+sshCreateClusterrolebinding(){
+	echo "***************************************************************************************************"
+	echo "*                                                                                                 *"
+	echo "*            Now,We should create clusterrolebinding kubelet-bootstrap on master                  *"
+	echo "*                                                                                                 *"
+	echo "***************************************************************************************************"
+	sleep 1
+	ssh ${MASTER_NAME} kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+	echo "step:------> create clusterrolebinding kubelet-bootstrap on master completed."
+}
+
 createK8sConfigFiles4Node(){
+	mkdir -p ${baseDir}/node/k8s
 	cd ${baseDir}/node/k8s
+	echo "step:------> create kubelet configFile"
+	sleep 1
+	mkdir -p /var/lib/kubelet
+	
 	cat > kubelet.service <<EOF
 [Unit]
 Description=Kubernetes Kubelet
@@ -259,7 +288,11 @@ RestartSec=5
 WantedBy=multi-user.target
 EOF
 
-
+	echo "step:------> create kubelet configFile completed"
+	sleep 1
+	
+	echo "step:------> create kube-proxy configFile"
+	sleep 1
 	cat > kube-proxy.service <<EOF
 [Unit]
 Description=Kubernetes Kube-Proxy Server
@@ -280,12 +313,22 @@ LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
 EOF
-
+	echo "step:------> create kube-proxy configFile completed."
+	sleep 1
 }
 
 configKubelet(){
 	#这个操作时在master上做！
 	#kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+	cd ${baseDir}/node/k8s
+	cp kubelet.service /usr/lib/systemd/system
+	systemctl daemon-reload
+	systemctl enable kubelet
+	systemctl start kubelet
+}
+
+configKubeProxy(){
+	
 	cd ${baseDir}/node/k8s
 	cp kube-proxy.service  /usr/lib/systemd/system
 	systemctl daemon-reload
@@ -298,18 +341,11 @@ configKubelet(){
 	#kubectl get node
 }
 
-configKubeProxy(){
-	cd ${baseDir}/node/k8s
-	cp kubelet.service /usr/lib/systemd/system
-	systemctl daemon-reload
-	systemctl enable kubelet
-	systemctl start kubelet
-}
-
 doSomeOsConfig
 createK8scomponents
 configFlannel
 configDocker
+sshCreateClusterrolebinding
 createK8sConfigFiles4Node
 configKubelet
-configKubeProxy
+#configKubeProxy
