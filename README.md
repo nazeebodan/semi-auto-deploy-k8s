@@ -17,6 +17,6 @@
 * 3.修改一些配置文件
 	* os的配置文件，如/etc/hosts，将master和node的主机名和ip加进去
 	* 确定好软件包的存放位置后，修改脚本的baseDir
-* 3.部署master节点，执行master/k8s目录下的master.sh(配置flannel的时候需要先确定-iface=eth0 这个选项)
-* 4.部署node节点
-* 5.因为加入了认证的配置，所以在node节点第一次加入集群的情况下，需要master节点认证,node才可见
+* 4.部署master节点，执行master/k8s目录下的master.sh(配置flannel的时候需要先确定-iface=eth0 这个选项)
+* 5.部署node节点
+* 6.因为加入了认证的配置，所以在node节点第一次加入集群的情况下，需要master节点认证,node才可见
