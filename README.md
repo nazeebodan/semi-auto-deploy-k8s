@@ -19,5 +19,5 @@
 	* 确定好软件包的存放位置后，修改脚本的baseDir
 * 4.部署master节点，执行master/k8s目录下的master.sh(配置flannel的时候需要先确定-iface=eth0 这个选项)
 * 5.部署node节点，执行node/node.sh
-* 6.因为加入了认证的配置，所以在node节点第一次加入集群后(启动kubelet,kube-proxy)，需要master节点认证,node才可见
+* 6.因为加入了认证的配置，所以在node节点第一次加入集群后(启动kubelet,kube-proxy)，需要master节点认证(kubectl certificate approve),node才可见
 * 7.如需清除配置，master节点执行master/cleanMaster.sh,node节点执行node/cleanNode.sh
