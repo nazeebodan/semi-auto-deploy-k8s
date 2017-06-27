@@ -41,6 +41,7 @@ serviceDir="/lib/systemd/system"
 MASTER_NAME=`hostname`
 MASTER_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 ETC_NAME=etcd-`hostname`
+#BOOTSTRAP_TOKEN="90db8027f413b5d51b563643478e2875"
 BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
 KUBE_APISERVER="https://${MASTER_IP}:6443"
 mkdir -p /var/lib/etcd
@@ -168,7 +169,6 @@ ExecStart=/usr/bin/kube-apiserver \\
 --logtostderr=true \\
 --v=0 \\
 --allow-privileged=true
---master=http://${MASTER_NAME}:8080
 Restart=on-failure
 Type=notify
 LimitNOFILE=65536
@@ -237,7 +237,7 @@ startKubeService(){
 	enableAndStarService kube-scheduler
 	echo "***************************************************************************************************"
 	echo "*                                                                                                 *"
-	echo "* show the kube-master cs status,If any componentstatuse's status is not healty,Pls check err log *"
+	echo "*     show the kube-master cs status,If any component's status is not healty,Pls check err log    *"
 	echo "*                                                                                                 *"
 	echo "***************************************************************************************************"
 	sleep  2
@@ -257,7 +257,7 @@ cpServiceConfig(){
 		check_ok
     fi
 		
-    cp ${baseDir}/master/k8s/$1 ${serviceDir}/
+    mv ${baseDir}/master/k8s/$1 ${serviceDir}/
 	check_ok
 	echo "step:------> create $1 config completed."
 	sleep 1
@@ -268,15 +268,17 @@ createToken(){
 	echo "step:------> create and copy bootstart_token"
 	sleep 1
 	cat > token.csv <<EOF
-	${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,"system:kubelet-bootstrap"
+${BOOTSTRAP_TOKEN},kubelet-bootstrap,10001,"system:kubelet-bootstrap"
 EOF
 
 	echo "step:------> create bootstart_token completed."
 	sleep 1
 	mkdir -p /etc/kubernetes/ssl
+	cp token.csv /etc/kubernetes
 	cp token.csv /etc/kubernetes/ssl
 	echo "step:------> copy bootstart_token completed."
 	sleep 1
+	rm -rf token.csv
 }
 
 createKubectlConfig(){
@@ -322,8 +324,8 @@ createKubectlConfig(){
 	echo "step:------> create kube-proxy kubeconfig completed."
 	sleep 1
 	
-	
 	cp bootstrap.kubeconfig kube-proxy.kubeconfig /etc/kubernetes/
+	rm -rf  bootstrap.kubeconfig kube-proxy.kubeconfig
 }
 
 configEtcd(){
@@ -400,7 +402,6 @@ EOF
 	echo "step:------> config etcd network "
 	sleep 1
 	check_ok
-	etcdctl mkdir /kube-centos/network
 	etcdctl --endpoints=https://${MASTER_NAME}:2379 --ca-file=/etc/kubernetes/ssl/ca.pem --cert-file=/etc/kubernetes/ssl/kubernetes.pem --key-file=/etc/kubernetes/ssl/kubernetes-key.pem mk /kube-centos/network/config '{"Network":"172.30.0.0/16", "SubnetLen": 24, "Backend": {"Type": "vxlan"}}'
 	#etcdctl mk /kube-centos/network/config "{ \"Network\": \"172.30.0.0/16\", \"SubnetLen\": 24, \"Backend\": { \"Type\": \"vxlan\" } }"
 	echo "step:------> config etcd network completed."
