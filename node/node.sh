@@ -3,12 +3,40 @@
 #######Begin########
 echo "***************************************************************************************************"
 echo "*                                                                                                 *"
-echo "*                                 begin to install k8s-node                                       *"
+echo "*                Note: Before run node.sh,You should set MASTER_NAME && MASTER_IP                 *"
 echo "*                                                                                                 *"
 echo "***************************************************************************************************"
-
+echo "Please input master's hostname :"
+read masterhostname
+MASTER_NAME=${masterhostname}
+echo "Please input master's ipaddr :"
+read masterip
+MASTER_IP=${masterip}
+echo "you input MASTER_NAME is \""${MASTER_NAME}"\",and MASTER_IP is \""${MASTER_IP}"\",do you confirm ?(yes/no):"
+read answer
+if [ "${answer}" = "yes" -o "${answer}" = "y" ];then
+	echo "Have you config /etc/hosts? (yes/no):"
+	read answer2
+	if [ "${answer2}" = "yes" -o "${answer2}" = "y" ];then
+		echo "***************************************************************************************************"
+		echo "*                                                                                                 *"
+		echo "*                                 begin to install k8s-node                                       *"
+		echo "*                                                                                                 *"
+		echo "***************************************************************************************************"
+	else
+		echo "***************************************************************************************************"
+		echo "*                         You should config /etc/hosts as first!                                  *"
+		echo "***************************************************************************************************"
+		exit 1
+	fi
+sleep 1
+else
+	echo "***************************************************************************************************"
+	echo "*             You should make sure the MASTER_NAME && MASTER_IP correct First!                    *"
+	echo "***************************************************************************************************"
+	exit 1
+fi
 ##check last command is OK or not.
-
 check_ok() {
         if [ $? != 0 ]
                 then
@@ -24,13 +52,12 @@ flannel_version="v0.7.1"
 flannel_file="flannel-v0.7.1-linux-amd64.tar.gz"
 DOCKER_FILE="docker-17.05.0-ce.tgz"
 serviceDir="/usr/lib/systemd/system"
-MASTER_NAME="sure-master"
-MASTER_IP="172.18.78.47"
+#MASTER_NAME="sure-master"
+#MASTER_IP="172.18.78.47"
 NODE_NAME=`hostname`
 NODE_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 KUBE_APISERVER="https://${MASTER_IP}:6443"
 
-mkdir -p /etc/kubernetes/ssl
 
 closeSelinux(){
     echo "step:------> close selinux config"
@@ -59,23 +86,29 @@ closeIptables(){
 doSomeOsConfig(){
 	closeSelinux
 	closeIptables
-	
 	mkdir -p /etc/kubernetes/ssl /var/lib/kubelet /var/lib/kube-proxy
-	
+}
+
+cpCAFromMaster(){
 	cd /etc/kubernetes/ssl
-	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master, Plsase input MASTER_HOST's passwd"
-	sleep 1
-	scp ${MASTER_IP}:/etc/kubernetes/ssl/{ca.pem,kubernetes.pem,kubernetes-key.pem,token.csv} .
+	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master, Plsase input MASTER_HOST's passwd:"
+	#scp ${MASTER_IP}:/etc/kubernetes/ssl/{ca.pem,kubernetes.pem,kubernetes-key.pem,token.csv} .
+	scp ${MASTER_IP}:/etc/kubernetes/ssl/* .
 	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master complted"
+	cp /etc/kubernetes/ssl/token.csv /etc/kubernetes/token.csv
 	sleep 1
 	
 	cd /etc/kubernetes
-	echo "step:------> copy *.kubeconfig,You should input masterhost's passwd"
-	sleep 1
+	echo "step:------> copy *.kubeconfig, Plsase input MASTER_HOST's passwd:"
 	scp ${MASTER_IP}:/etc/kubernetes/*.kubeconfig .
 	echo "step:------> copy *.kubeconfig completed."
 	sleep 1
 	
+	echo "step:------> copy ~/.kube/comfig to node, Plsase input MASTER_HOST's passwd:"
+	mkdir -p ~/.kube
+	scp ${MASTER_IP}:~/.kube/config ~/.kube
+	echo "step:------> copy ~/.kube/comfig to node completed."
+	sleep 1
 }
 
 createK8scomponents(){
@@ -108,6 +141,7 @@ createK8scomponents(){
 	check_ok
 	echo "step:------> copy kube-node components to /usr/bin completed."
 	sleep 1
+	
 	rm -rf kubernetes
 }
 
@@ -318,22 +352,13 @@ EOF
 }
 
 configKubelet(){
-	#这个操作时在master上做！
+	#这个操作之前需要在master上做！
 	#kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
 	cd ${baseDir}/node/k8s
-	cp kubelet.service /usr/lib/systemd/system
+	mv kubelet.service /usr/lib/systemd/system
 	systemctl daemon-reload
 	systemctl enable kubelet
 	systemctl start kubelet
-}
-
-configKubeProxy(){
-	
-	cd ${baseDir}/node/k8s
-	cp kube-proxy.service  /usr/lib/systemd/system
-	systemctl daemon-reload
-	systemctl enable kube-proxy
-	systemctl start kube-proxy
 	
 	#在node第一次启动kubelet后，相当于是有个加入节点的请求，需要在master端做操作
 	#kubectl get csr
@@ -341,11 +366,20 @@ configKubeProxy(){
 	#kubectl get node
 }
 
+configKubeProxy(){
+	cd ${baseDir}/node/k8s
+	mv kube-proxy.service  /usr/lib/systemd/system
+	systemctl daemon-reload
+	systemctl enable kube-proxy
+	systemctl start kube-proxy
+}
+
 doSomeOsConfig
+cpCAFromMaster
 createK8scomponents
 configFlannel
 configDocker
 sshCreateClusterrolebinding
 createK8sConfigFiles4Node
 configKubelet
-#configKubeProxy
+configKubeProxy
