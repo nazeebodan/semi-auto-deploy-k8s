@@ -36,6 +36,7 @@ else
 	echo "***************************************************************************************************"
 	exit 1
 fi
+
 ##check last command is OK or not.
 check_ok() {
         if [ $? != 0 ]
@@ -354,24 +355,47 @@ EOF
 configKubelet(){
 	#这个操作之前需要在master上做！
 	#kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+	echo "step:------> startup kubelet"
+	sleep 1
 	cd ${baseDir}/node/k8s
 	mv kubelet.service /usr/lib/systemd/system
 	systemctl daemon-reload
 	systemctl enable kubelet
 	systemctl start kubelet
-	
-	#在node第一次启动kubelet后，相当于是有个加入节点的请求，需要在master端做操作
-	#kubectl get csr
-	#kubectl certificate approve xxx
-	#kubectl get node
+	check_ok
+	echo "step:------> startup kubelet comleted."
+	sleep 1
 }
 
 configKubeProxy(){
+	echo "step:------> startup kube-proxy"
+	sleep 1
 	cd ${baseDir}/node/k8s
 	mv kube-proxy.service  /usr/lib/systemd/system
 	systemctl daemon-reload
 	systemctl enable kube-proxy
 	systemctl start kube-proxy
+	check_ok
+	echo "step:------> startup kube-proxy completed."
+	sleep 1
+}
+
+beforeFinishedNotice(){
+	
+	#在node第一次启动kubelet后，相当于是有个加入节点的请求，需要在master端做操作
+	#kubectl get csr
+	#kubectl certificate approve xxx
+	#kubectl get node
+	echo "***************************************************************************************************"
+	echo "*                                                                                                 *"
+	echo "*  k8s-config finished on node.                                                                   *"
+	echo "*  But you should continue to certicate approve node on master.                                   *"
+	echo "*  The commands are as follows:                                                                   *"
+	echo "*       kubectl get csr                                                                           *"
+	echo "*       kubectl certificate approve xxx                                                           *"
+	echo "*       kubectl get node                                                                          *"
+	echo "*                                                                                                 *"
+	echo "***************************************************************************************************"
 }
 
 doSomeOsConfig
@@ -383,3 +407,4 @@ sshCreateClusterrolebinding
 createK8sConfigFiles4Node
 configKubelet
 configKubeProxy
+beforeFinishedNotice
