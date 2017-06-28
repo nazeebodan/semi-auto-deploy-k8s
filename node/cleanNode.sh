@@ -12,3 +12,4 @@ rm -rf ~/.kube
 iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat
 ip link del flannel.1
 ip link del docker0
+echo "***************clean node's config finished!****************"

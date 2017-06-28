@@ -92,7 +92,7 @@ doSomeOsConfig(){
 
 cpCAFromMaster(){
 	cd /etc/kubernetes/ssl
-	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master, Plsase input MASTER_HOST's passwd:"
+	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master, Plsase input ${MASTER_IP}'s passwd:"
 	#scp ${MASTER_IP}:/etc/kubernetes/ssl/{ca.pem,kubernetes.pem,kubernetes-key.pem,token.csv} .
 	scp ${MASTER_IP}:/etc/kubernetes/ssl/* .
 	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master complted"
@@ -100,12 +100,12 @@ cpCAFromMaster(){
 	sleep 1
 	
 	cd /etc/kubernetes
-	echo "step:------> copy *.kubeconfig, Plsase input MASTER_HOST's passwd:"
+	echo "step:------> copy *.kubeconfig, Plsase input ${MASTER_IP}'s passwd:"
 	scp ${MASTER_IP}:/etc/kubernetes/*.kubeconfig .
 	echo "step:------> copy *.kubeconfig completed."
 	sleep 1
 	
-	echo "step:------> copy ~/.kube/comfig to node, Plsase input MASTER_HOST's passwd:"
+	echo "step:------> copy ~/.kube/comfig to node, Plsase input ${MASTER_IP}'s passwd:"
 	mkdir -p ~/.kube
 	scp ${MASTER_IP}:~/.kube/config ~/.kube
 	echo "step:------> copy ~/.kube/comfig to node completed."
@@ -119,14 +119,26 @@ createK8scomponents(){
         #exit 0
 		echo "***************************************************************************************************"
 		echo "*                                                                                                 *"
-		echo "*             kubernetes-server-linux-amd64.tar.gzis not exist! Now,We will get it first!         *"
+		echo "*             kubernetes-server-linux-amd64.tar.gzip not exist! Now,We will get it first!         *"
 		echo "*                                                                                                 *"
 		echo "***************************************************************************************************"
-		echo "step:------> wget ${k8s_file}"
-		wget https://dl.k8s.io/${k8s_version}/kubernetes-server-linux-amd64.tar.gz
-		#wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
-		check_ok
-		echo "step:------> wget ${k8s_file} completed."
+		echo "we have two way to get kubernetes-server-linux-amd64.tar.gzip"
+		echo "1 - get it by scp  from master"
+		echo "2 - get it by wget from internet"
+		echo "which one do you choice (1/2):"
+		read howtoget
+		if [ "${howtoget}" -eq 1 ];then
+			echo "step:------> scp ${k8s_file}"
+			scp ${MASTER_NAME}:${baseDir}/master/k8s/${k8s_file} ${baseDir}/master/k8s/
+			check_ok
+			echo "step:------> scp ${k8s_file} from master completed."
+		else
+			echo "step:------> wget ${k8s_file}"
+			wget https://dl.k8s.io/${k8s_version}/${k8s_file}
+			#wget https://github.com/kubernetes/kubernetes/releases/download/${k8s_version}/kubernetes.tar.gz
+			check_ok
+			echo "step:------> wget ${k8s_file} completed."
+		fi
     fi
 	echo "step:------> unzip k8s-package"
 	sleep 1
@@ -388,7 +400,7 @@ beforeFinishedNotice(){
 	#kubectl get node
 	echo "***************************************************************************************************"
 	echo "*                                                                                                 *"
-	echo "*  k8s-config finished on node.                                                                   *"
+	echo "*  Kubernetes-config finished on node.                                                            *"
 	echo "*  But you should continue to certicate approve node on master.                                   *"
 	echo "*  The commands are as follows:                                                                   *"
 	echo "*       kubectl get csr                                                                           *"
