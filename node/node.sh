@@ -90,6 +90,33 @@ doSomeOsConfig(){
 	mkdir -p /etc/kubernetes/ssl /var/lib/kubelet /var/lib/kube-proxy
 }
 
+configSSH2Master(){
+	echo "***************************************************************************************************"
+	echo "*                         Now We Will Config SSH to MASTER First!                                 *"
+	echo "*                                                                                                 *"
+	echo "*   If you don't config ssh to master, the following copy operation you will enter the password   *"                                                                       *"
+	echo "***************************************************************************************************"
+	echo "Would you agree to config ssh to master? (yes/no):"
+	read sshanswer
+	if [ "${sshanswer}" = "yes" -o "${sshanswer}" = "y" ];then
+		echo "step:------> Generating public rsa key pair on Node"
+		sleep 1
+		ssh-keygen
+		echo "step:------> Generating public rsa key pair on Node completed."
+		sleep 1
+		
+		echo "step:------> Copy public rsa key pair to Master"
+		sleep 1
+		ssh-copy-id -i ~/.ssh/id_rsa.pub ${MASTER_NAME}
+		echo "step:------> Copy public rsa key pair to Master completed."
+		sleep 1
+	else
+		echo "**************************************************************************************************************************"
+		echo "*        You chose not to configure SSH to Master, the following copy operation you will enter the password               *"
+		echo "***************************************************************************************************************************"
+	fi
+}
+
 cpCAFromMaster(){
 	cd /etc/kubernetes/ssl
 	echo "step:------> copy k8s.pem,ca.pem,token.csv from k8s-master, Plsase input ${MASTER_IP}'s passwd:"
@@ -411,6 +438,7 @@ beforeFinishedNotice(){
 }
 
 doSomeOsConfig
+configSSH2Master
 cpCAFromMaster
 createK8scomponents
 configFlannel
