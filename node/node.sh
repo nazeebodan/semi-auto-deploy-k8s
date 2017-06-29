@@ -46,7 +46,7 @@ check_ok() {
         fi
 }
 
-baseDir="/softdb/semi-auto-deploy-k8s"
+baseDir="$1"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 flannel_version="v0.7.1"
@@ -94,7 +94,7 @@ configSSH2Master(){
 	echo "***************************************************************************************************"
 	echo "*                         Now We Will Config SSH to MASTER First!                                 *"
 	echo "*                                                                                                 *"
-	echo "*   If you don't config ssh to master, the following copy operation you will enter the password   *"                                                                       *"
+	echo "*   If you don't config ssh to master, the following copy operation you will enter the password   *"
 	echo "***************************************************************************************************"
 	echo "Would you agree to config ssh to master? (yes/no):"
 	read sshanswer
@@ -301,7 +301,7 @@ EOF
 	
 	echo "step:------> startup docker "
 	sleep 1
-	cp docker.service /usr/lib/systemd/system/
+	mv docker.service ${serviceDir}
 	systemctl daemon-reload
 	systemctl stop firewalld
 	iptables -F && sudo iptables -X && sudo iptables -F -t nat && sudo iptables -X -t nat
@@ -312,7 +312,8 @@ EOF
 	echo "step:------> startup docker completed."
 	sleep 1
 	
-	docker info	
+	docker info
+	
 }
 
 sshCreateClusterrolebinding(){
@@ -397,7 +398,7 @@ configKubelet(){
 	echo "step:------> startup kubelet"
 	sleep 1
 	cd ${baseDir}/node/k8s
-	mv kubelet.service /usr/lib/systemd/system
+	mv kubelet.service ${serviceDir}
 	systemctl daemon-reload
 	systemctl enable kubelet
 	systemctl start kubelet
@@ -410,7 +411,7 @@ configKubeProxy(){
 	echo "step:------> startup kube-proxy"
 	sleep 1
 	cd ${baseDir}/node/k8s
-	mv kube-proxy.service  /usr/lib/systemd/system
+	mv kube-proxy.service  ${serviceDir}
 	systemctl daemon-reload
 	systemctl enable kube-proxy
 	systemctl start kube-proxy

@@ -1,11 +1,11 @@
 #!/bin/bash
-
+echo "***************begin to clean node's config ****************"
 systemctl stop kubelet kube-proxy docker flanneld
 rm -rf /var/lib/kubelet
 rm -rf /var/lib/docker
 rm -rf /var/run/flannel/
 rm -rf /var/run/docker/
-rm -rf /lib/systemd/system/{kubelet,docker,flanneld}.service
+rm -rf /usr/lib/systemd/system/{kubelet,docker,flanneld}.service
 rm -rf /usr/bin/{kubectl,kubelet,kube-proxy,docker*,flanneld}
 rm -rf /etc/kubernetes
 rm -rf ~/.kube

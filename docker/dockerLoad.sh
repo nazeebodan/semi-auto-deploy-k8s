@@ -10,7 +10,7 @@ check_ok() {
 }
 
 #env
-baseDir="/softdb/semi-auto-deploy-k8s"
+baseDir="$1"
 
 echo "***************************************************************************************************"
 echo "*   NOTE:                                                                                         *"
@@ -36,7 +36,7 @@ if [ "${loadanswer}" = "yes" -o "${loadanswer}" = "y" ];then
 	sleep 1
 	echo "step:------> loading some docker images"
 	sleep 1
-	sh dockerload.sh	
+	sh dockerLoadDetail.sh
 	echo "step:------> loading some docker images completed."
 	sleep 1
 fi

@@ -20,7 +20,7 @@ check_ok() {
 
 
 ##some env
-baseDir="/softdb/semi-auto-deploy-k8s"
+baseDir="$1"
 mkdir -p /etc/kubernetes/ssl
 
 configSSLTools(){

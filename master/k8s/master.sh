@@ -52,14 +52,14 @@ fi
 
 ##some env
 
-baseDir="/softdb/semi-auto-deploy-k8s"
+baseDir="$1"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 etcd_version="v3.1.9"
 etcd_file="etcd-v3.1.9-linux-amd64.tar.gz"
 flannel_version="v0.7.1"
 flannel_file="flannel-v0.7.1-linux-amd64.tar.gz"
-serviceDir="/lib/systemd/system"
+serviceDir="/usr/lib/systemd/system"
 MASTER_NAME=`hostname`
 MASTER_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 ETC_NAME=etcd-`hostname`
@@ -68,6 +68,7 @@ BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
 KUBE_APISERVER="https://${MASTER_IP}:6443"
 mkdir -p /var/lib/etcd
 mkdir -p /etc/kubernetes/
+mkdir -p ~/.ssh
 #rm -rf /lib/systemd/system/kube*
 
 backService(){

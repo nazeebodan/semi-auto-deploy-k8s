@@ -1,3 +1,5 @@
+#!/bin/bash
+echo "***************begin to clean master's config ****************"
 systemctl stop kube-apiserver kube-controller-manager kube-scheduler
 rm -rf /var/run/kubernetes
 rm -rf /lib/systemd/system/{kube-apiserver,kube-controller-manager,kube-scheduler}.service
@@ -7,7 +9,7 @@ rm -rf /etc/kubernetes
 rm -rf ~/.kube
 systemctl stop etcd
 rm -rf /var/lib/etcd
-rm -rf /lib/systemd/system/etcd.service
+rm -rf /usr/lib/systemd/system/etcd.service
 rm -rf /usr/bin/etcd
 systemctl stop flanneld
 rm -rf /var/run/flannel/
