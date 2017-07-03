@@ -9,15 +9,19 @@ case $1 in
 	echo ""
 	echo " -h            help information"
 	echo " -d            baseDir, Where you store your software "
-	echo "               the default value is  \"/softdb/semi-auto-deploy-k8s\""
+	echo "               the default value is \"/softdb/semi-auto-deploy-k8s\""
 	echo ""
 	echo " Example: sh installk8s.sh "
-	echo " Example: sh installk8s.sh -d storeSoftPath"
+	echo " Example: sh installk8s.sh -d /xxxx"
 	echo ""
 	exit 0
 	;;
 -d)
-	baseDir=$2
+	if [ ! -n "$2" ]; then
+		baseDir="/softdb/semi-auto-deploy-k8s"
+	else
+		baseDir=$2
+	fi
 	;;
 *)
 	if [ ! -n "$1" ]; then
@@ -29,9 +33,8 @@ case $1 in
 	fi
 	;;
 esac
-echo "------------>baseDir=${baseDir}"
 
-echo "---------------------------------Kubernetes Install Menu-------------------------------------------"
+echo "------------------------------------Kubernetes Install Menu----------------------------------------"
 echo "| Choose your option                                                                              |"
 echo "|                                                                                                 |"
 echo "|                        1.Config CA                                                              |"
