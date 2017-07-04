@@ -39,5 +39,5 @@
 * 3.脚本的默认baseDir路径为/softdb/semi-auto-deploy-k8s,如需修改使用 -d 参数，同样也可以用 -h 来查看帮助
 * 4.部署master节点，执行master/k8s目录下的master.sh(配置flannel的时候需要先确定-iface=eth0 这个选项)
 * 5.因为加入了CA认证的配置，所以在node节点第一次加入集群后(启动kubelet,kube-proxy)，需要master节点认证(kubectl certificate approve),node才可见
-* 6.部署node节点时，为了减少输入密码的次数，添加了ssh的配置，当然为了安全性也可以不配置，多输入几次密码
+* 6.部署node节点时，为了减少输入密码的次数，添加了ssh的配置，当然为了安全性也可以不配置
 	
