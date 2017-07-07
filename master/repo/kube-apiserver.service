@@ -10,7 +10,7 @@ ExecStart=/usr/bin/kube-apiserver \\
 --bind-address=${MASTER_NAME} \\
 --insecure-bind-address=${MASTER_NAME} \\
 --authorization-mode=RBAC \\
---runtime-config=rbac.authorization.k8s.io/v1alpha1 \\
+--runtime-config=rbac.authorization.k8s.io/v1alpha1 \\  
 --kubelet-https=true \\
 --experimental-bootstrap-token-auth \\
 --token-auth-file=/etc/kubernetes/token.csv \\
@@ -40,3 +40,14 @@ Type=notify
 LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
+
+--authorization-mode=RBAC \\  #1.6新特性,指定在安全端口使用 RBAC授权模式，拒绝未通过授权的请求；
+kube-scheduler、kube-controller-manager 一般和 kube-apiserver 部署在同一台机器上，它们使用非安全端口和 kube-apiserver通信;
+kubelet、kube-proxy、kubectl 部署在其它 Node 节点上，如果通过安全端口访问 kube-apiserver，则必须先通过 TLS 证书认证，再通过 RBAC 授权；
+kube-proxy、kubectl 通过在使用的证书里指定相关的 User、Group 来达到通过 RBAC 授权的目的；
+如果使用了 kubelet TLS Boostrap 机制，则不能再指定 --kubeletcertificate-authority 、 --kubelet-client-certificate 和 --kubelet-client-key 选项，
+否则后续 kube-apiserver 校验 kubelet 证书时出现 ”x509: certificate signed by unknown authority“ 错误；
+--admission-control 值必须包含 ServiceAccount
+--bind-address 不能为 127.0.0.1
+--service-cluster-ip-range 指定 Service Cluster IP 地址段，该地址段不能路由可达；
+--service-node-port-range=${NODE_PORT_RANGE} 指定 NodePort 的端口范围；
