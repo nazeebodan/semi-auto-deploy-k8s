@@ -66,6 +66,8 @@ ETC_NAME=etcd-`hostname`
 #BOOTSTRAP_TOKEN="90db8027f413b5d51b563643478e2875"
 BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
 KUBE_APISERVER="https://${MASTER_IP}:6443"
+SERVICE_CIDR="10.254.0.0/16"
+CLUSTER_CIDR="172.30.0.0/16"
 mkdir -p /var/lib/etcd
 mkdir -p /etc/kubernetes/
 mkdir -p ~/.ssh
@@ -172,7 +174,7 @@ ExecStart=/usr/bin/kube-apiserver \\
 --kubelet-https=true \\
 --experimental-bootstrap-token-auth \\
 --token-auth-file=/etc/kubernetes/ssl/token.csv \\
---service-cluster-ip-range=10.254.0.0/16 \\
+--service-cluster-ip-range=${SERVICE_CIDR} \\
 --service-node-port-range=30000-32767 \\
 --tls-cert-file=/etc/kubernetes/ssl/kubernetes.pem \\
 --tls-private-key-file=/etc/kubernetes/ssl/kubernetes-key.pem\\
@@ -209,8 +211,8 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 ExecStart=/usr/bin/kube-controller-manager \\
 --address=127.0.0.1 \\
 --allocate-node-cidrs=true \\
---service-cluster-ip-range=10.254.0.0/16 \\
---cluster-cidr=10.254.0.0/16 \\
+--service-cluster-ip-range=${SERVICE_CIDR} \\
+--cluster-cidr=${CLUSTER_CIDR} \\
 --cluster-name=kubernetes \\
 --cluster-signing-cert-file=/etc/kubernetes/ssl/ca.pem \\
 --cluster-signing-key-file=/etc/kubernetes/ssl/ca-key.pem \\

@@ -58,6 +58,8 @@ serviceDir="/usr/lib/systemd/system"
 NODE_NAME=`hostname`
 NODE_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 KUBE_APISERVER="https://${MASTER_IP}:6443"
+SERVICE_CIDR="10.254.0.0/16"
+CLUSTER_CIDR="172.30.0.0/16"
 
 
 closeSelinux(){
@@ -378,7 +380,7 @@ WorkingDirectory=/var/lib/kube-proxy
 ExecStart=/usr/bin/kube-proxy \\
 --bind-address=${NODE_IP} \\
 --hostname-override=${NODE_IP} \\
---cluster-cidr=10.254.0.0/16 \\
+--cluster-cidr=${CLUSTER_CIDR} \\
 --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig \\
 --logtostderr=true \\
 --v=0
