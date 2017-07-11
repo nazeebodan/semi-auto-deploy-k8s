@@ -41,9 +41,11 @@ echo "|                        1.Config CA                                      
 echo "|                        2.Install K8s On Master                                                  |"
 echo "|                        3.Install K8s On Node                                                    |"
 echo "|                        4.Load Docker Images For Node                                            |"
-echo "|                        5.Uninstall K8s On Master                                                |"
-echo "|                        6.Uninstall K8s On Node                                                  |"
-echo "|                        7.Exit                                                                   |"
+echo "|                        5.Install Kube-DNS                                                       |"
+echo "|                        6.Install Kube-Dashboard                                                 |"
+echo "|                        7.Uninstall K8s On Master                                                |"
+echo "|                        8.Uninstall K8s On Node                                                  |"
+echo "|                        9.Exit                                                                   |"
 echo "|                                                                                                 |"
 echo "---------------------------------------------------------------------------------------------------"
 echo "Choose your option (1-7):"
@@ -72,7 +74,7 @@ case $answer in
 	exit 1
 	;;
 *)
-	echo "Error! The number you input isn't 1 to 7"
+	echo "Error! The number you input isn't 1 to 9"
 	exit 1
 	;;
 esac
