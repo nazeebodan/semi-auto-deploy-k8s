@@ -353,7 +353,7 @@ ExecStart=/usr/bin/kubelet \\
 --require-kubeconfig \\
 --cert-dir=/etc/kubernetes/ssl \\
 --cluster_dns=10.254.0.2 \\
---cluster_domain=cluster.local. \\
+--cluster_domain=cluster.local \\
 --hairpin-mode=promiscuous-bridge \\
 --allow-privileged=true \\
 --serialize-image-pulls=false \\
