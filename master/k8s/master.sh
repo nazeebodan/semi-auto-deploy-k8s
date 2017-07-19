@@ -463,7 +463,7 @@ ExecStart=/usr/bin/flanneld \\
 -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem \\
 -etcd-endpoints=https://${MASTER_NAME}:2379 \\
 -etcd-prefix=/kube-centos/network \\
--iface=eth0
+-iface=ens32
 ExecStartPost=/usr/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
 [Install]
