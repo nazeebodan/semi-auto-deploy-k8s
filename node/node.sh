@@ -47,6 +47,7 @@ check_ok() {
 }
 
 baseDir="$1"
+networkDeviceName="$2"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 flannel_version="v0.7.1"
@@ -56,7 +57,7 @@ serviceDir="/usr/lib/systemd/system"
 #MASTER_NAME="sure-master"
 #MASTER_IP="172.18.78.47"
 NODE_NAME=`hostname`
-NODE_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
+NODE_IP=`ifconfig ${networkDeviceName}|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 KUBE_APISERVER="https://${MASTER_IP}:6443"
 SERVICE_CIDR="10.254.0.0/16"
 CLUSTER_CIDR="172.30.0.0/16"
@@ -217,7 +218,7 @@ ExecStart=/usr/bin/flanneld \\
 -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem \\
 -etcd-endpoints=https://${MASTER_NAME}:2379 \\
 -etcd-prefix=/kube-centos/network \\
--iface=eth0
+-iface=${networkDeviceName}
 ExecStartPost=/usr/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
 [Install]

@@ -1,38 +1,39 @@
 #!/bin/bash
 
 #env
-baseDir=""
+baseDir="/softdb/semi-auto-deploy-k8s"
+networkDeviceName="eth0"
 #######Begin########
-
-case $1 in
--h)
+printHelp(){
 	echo ""
 	echo " -h            help information"
 	echo " -d            baseDir, Where you store your software "
 	echo "               the default value is \"/softdb/semi-auto-deploy-k8s\""
+	echo " -n            network device name, such as eth0,ens32,etc.. "
+	echo "               the default value is \"eth0\""
 	echo ""
-	echo " Example: sh installk8s.sh "
-	echo " Example: sh installk8s.sh -d /xxxx"
-	echo ""
-	exit 0
-	;;
--d)
-	if [ ! -n "$2" ]; then
-		baseDir="/softdb/semi-auto-deploy-k8s"
-	else
-		baseDir=$2
-	fi
-	;;
-*)
-	if [ ! -n "$1" ]; then
-	    baseDir="/softdb/semi-auto-deploy-k8s"
-	else
-		echo "invalid option --$1"
-		echo "Try 'sh installk8s.sh -h' for more information."
-		exit 1
-	fi
-	;;
-esac
+	echo " Example: sh configk8scomp.sh "
+	echo " Example: sh configk8scomp.sh -d /xxxx -n ens32"	
+}
+
+cmd="sb"
+while getopts d:n:h x
+do
+    case $x in
+        d) baseDir=$OPTARG
+        	;;
+        n) networkDeviceName=$OPTARG
+        	;;
+        h) printHelp
+        	exit 0
+        	;;
+        \?) echo "invalid parameter"
+        	printHelp
+        	exit 0
+        	;;
+    esac
+done
+
 
 echo "------------------------------------Kubernetes Install Menu----------------------------------------"
 echo "| Choose your option                                                                              |"
@@ -53,10 +54,10 @@ case $answer in
 	sh ca/configpem.sh ${baseDir}
 	;;
 2)
-	sh master/k8s/master.sh ${baseDir}
+	sh master/k8s/master.sh ${baseDir} ${networkDeviceName}
 	;;
 3)
-	sh node/node.sh ${baseDir}
+	sh node/node.sh ${baseDir} ${networkDeviceName}
 	;;
 4)
 	sh docker/dockerLoad.sh ${baseDir}

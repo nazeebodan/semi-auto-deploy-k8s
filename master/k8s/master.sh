@@ -53,6 +53,7 @@ fi
 ##some env
 
 baseDir="$1"
+networkDeviceName="$2"
 k8s_version="v1.6.2"
 k8s_file="kubernetes-server-linux-amd64.tar.gz"
 etcd_version="v3.1.9"
@@ -61,7 +62,7 @@ flannel_version="v0.7.1"
 flannel_file="flannel-v0.7.1-linux-amd64.tar.gz"
 serviceDir="/usr/lib/systemd/system"
 MASTER_NAME=`hostname`
-MASTER_IP=`ifconfig eth0|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
+MASTER_IP=`ifconfig ${networkDeviceName}|sed -n '2p'|awk '{print $2}'|cut -c 1-20`
 ETC_NAME=etcd-`hostname`
 #BOOTSTRAP_TOKEN="90db8027f413b5d51b563643478e2875"
 BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x| tr -d ' ')
@@ -463,7 +464,7 @@ ExecStart=/usr/bin/flanneld \\
 -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem \\
 -etcd-endpoints=https://${MASTER_NAME}:2379 \\
 -etcd-prefix=/kube-centos/network \\
--iface=ens32
+-iface=${networkDeviceName}
 ExecStartPost=/usr/bin/mk-docker-opts.sh -k DOCKER_NETWORK_OPTIONS -d /run/flannel/docker
 Restart=on-failure
 [Install]
