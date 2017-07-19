@@ -16,7 +16,6 @@ printHelp(){
 	echo " Example: sh configk8scomp.sh -d /xxxx -n ens32"	
 }
 
-cmd="sb"
 while getopts d:n:h x
 do
     case $x in
@@ -73,7 +72,7 @@ case $answer in
 	exit 1
 	;;
 *)
-	echo "Error! The number you input isn't 1 to 9"
+	echo "Error! The number you input isn't 1 to 7"
 	exit 1
 	;;
 esac

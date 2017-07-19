@@ -6,17 +6,26 @@ echo "*                                                                         
 echo "*                     Note: Before run master.sh,You must config pem first                        *"
 echo "*                                                                                                 *"
 echo "***************************************************************************************************"
-echo "Have you executed ca/configpem.sh yet? (yes/no):"
+echo "Have you configured CA yet? (yes/no):"
 read answer
 if [ "${answer}" = "yes" -o "${answer}" = "y" ];then
 	echo "Have you config /etc/hosts? (yes/no):"
 	read answer2
 	if [ "${answer2}" = "yes" -o "${answer2}" = "y" ];then
+		echo "Have you make sure your network device name is $2? (yes/no):"
+		read answer3
+		if [ "${answer3}" = "yes" -o "${answer3}" = "y" ];then
 		echo "***************************************************************************************************"
 		echo "*                                                                                                 *"
 		echo "*                                 begin to install k8s-master                                     *"
 		echo "*                                                                                                 *"
 		echo "***************************************************************************************************"
+		else
+			echo "***************************************************************************************************"
+			echo "*                     You should query your network device name first!                            *"
+			echo "***************************************************************************************************"
+			exit 1
+		fi
 	else
 		echo "***************************************************************************************************"
 		echo "*                         You should config /etc/hosts as first!                                  *"
