@@ -1,0 +1,20 @@
+{
+  "CN": "harbor",
+  "hosts": [
+    "127.0.0.1",
+    "192.168.0.19"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "BeiJing",
+      "L": "BeiJing",
+      "O": "k8s",
+      "OU": "System"
+    }
+  ]
+}
