@@ -18,7 +18,6 @@ printHelp(){
 	echo " Example: sh configk8scomp.sh -d /xxxx -n ens32"	
 }
 
-cmd="sb"
 while getopts d:n:h x
 do
     case $x in
@@ -36,17 +35,18 @@ do
     esac
 done
 
-echo "------------------------------------Kubernetes Install Menu----------------------------------------"
+echo "-----------------------------------K8s Components Config Menu--------------------------------------"
 echo "| Choose your option                                                                              |"
 echo "|                                                                                                 |"
 echo "|                        1.Install Docker                                                         |"
 echo "|                        2.Install Harbor                                                         |"
 echo "|                        3.Install Kube-DNS                                                       |"
 echo "|                        4.Install Kube-Dashboard                                                 |"
-echo "|                        5.Exit                                                                   |"
+echo "|                        5.Install EFK                                                            |"
+echo "|                        6.Exit                                                                   |"
 echo "|                                                                                                 |"
 echo "---------------------------------------------------------------------------------------------------"
-echo "Choose your option (1-7):"
+echo "Choose your option (1-6):"
 read answer
 case $answer in
 1)
@@ -56,17 +56,20 @@ case $answer in
 	echo "to be continue..."
 	;;
 3)
-	sh deploy/dashboard/deploydashboard.sh ${baseDir}
+	sh deploy/dns/deploydns.sh ${baseDir}
 	;;
 4)
-	echo "to be continue..."
+	sh deploy/dashboard/deploydashboard.sh ${baseDir}
 	;;
 5)
+	sh deploy/efk/deployefk.sh ${baseDir}
+	;;
+6)
 	echo "byebye"
 	exit 1
 	;;
 *)
-	echo "Error! The number you input isn't 1 to 5"
+	echo "Error! The number you input isn't 1 to 6"
 	exit 1
 	;;
 esac
