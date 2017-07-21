@@ -18,11 +18,20 @@ if [ "${answer}" = "yes" -o "${answer}" = "y" ];then
 	echo "Have you config /etc/hosts? (yes/no):"
 	read answer2
 	if [ "${answer2}" = "yes" -o "${answer2}" = "y" ];then
+		echo "Have you make sure your network device name is $2? (yes/no):"
+		read answer3
+		if [ "${answer3}" = "yes" -o "${answer3}" = "y" ];then
 		echo "***************************************************************************************************"
 		echo "*                                                                                                 *"
 		echo "*                                 begin to install k8s-node                                       *"
 		echo "*                                                                                                 *"
 		echo "***************************************************************************************************"
+		else
+			echo "***************************************************************************************************"
+			echo "*                     You should query your network device name first!                            *"
+			echo "***************************************************************************************************"
+			exit 1
+		fi
 	else
 		echo "***************************************************************************************************"
 		echo "*                         You should config /etc/hosts as first!                                  *"
@@ -444,9 +453,9 @@ beforeFinishedNotice(){
 doSomeOsConfig
 configSSH2Master
 cpCAFromMaster
-createK8scomponents
 configFlannel
 configDocker
+createK8scomponents
 sshCreateClusterrolebinding
 createK8sConfigFiles4Node
 configKubelet
