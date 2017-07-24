@@ -21,7 +21,7 @@
 	* k8s: master节点的配置和清除脚本
 	* repo: 配置信息的说明文档，用作参考
 * node: node节点的配置和清除脚本
-	
+* deploy: 用于部署k8s的相关组件
 
 ### 执行说明
 * 添加了统一的入口installk8s.sh,包括功能：
@@ -31,6 +31,13 @@
 	* 4.清除master节点的k8s配置（包括：k8s、etcd、flannel）
 	* 5.清除node节点的k8s配置（包括：k8s、flannel、docker） 
 	* 6.装载一部分需要的docker镜像（如pod-infrastructure、pause、dns等）
+
+* 添加了统一的配置入口configk8scomp.sh,包括功能：
+	* 1.配置docker(主要用于单独部署docker，如果是节点要部署整套k8s，那么不需要调用它) 
+	* 2.配置harbor(用于harbor仓库的部署，和k8s关系不大，可与第一项的配置docker配合起来使用)
+	* 3.部署Kube-DNS
+	* 4.部署Kube-Dashboard
+	* 5.部署EFK日志套件
 	
 
 ### 补充说明：
