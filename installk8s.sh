@@ -12,8 +12,8 @@ printHelp(){
 	echo " -n            network device name, such as eth0,ens32,etc.. "
 	echo "               the default value is \"eth0\""
 	echo ""
-	echo " Example: sh configk8scomp.sh "
-	echo " Example: sh configk8scomp.sh -d /xxxx -n ens32"	
+	echo " Example: sh installk8s.sh "
+	echo " Example: sh installk8s.sh -d /xxxx -n ens32"	
 }
 
 while getopts d:n:h x
